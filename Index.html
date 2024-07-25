@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wheel of Names</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            position: relative;
+        }
+        #wheelCanvas {
+            border: 2px solid #000;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        #pointer {
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            transform: translate(-50%, -50%) rotate(270deg);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 40px solid grey;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+        }
+        #controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #colorInput {
+            margin-left: 10px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+</head>
+<body>
+    <div id="wheelContainer" style="position: relative;">
+        <canvas id="wheelCanvas" width="500" height="500"></canvas>
+        <div id="pointer"></div>
+    </div>
+    <div id="controls">
+        <input type="text" id="nameInput" placeholder="Enter name" />
+        <input type="color" id="colorInput" />
+        <button id="addNameBtn">Add Name</button>
+        <button id="spinBtn">Spin Wheel</button>
+        <button id="saveWheelBtn">Save Wheel</button>
+        <button id="resetWheelBtn">Reset Wheel</button>
+    </div>
+    <audio id="spinSound" src="spinner-sound-36693.mp3"></audio>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+    <script src="wheel.js"></script>
+</body>
+</html>
