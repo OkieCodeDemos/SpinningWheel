@@ -2,78 +2,34 @@ const canvas = document.getElementById('wheelCanvas');
 const ctx = canvas.getContext('2d');
 let sections = [];
 let spinning = false;
-let popupOpen = false; // Flag to track if SweetAlert2 popup is open
+let popupOpen = false;
 
 const addNameBtn = document.getElementById('addNameBtn');
-addNameBtn.addEventListener('click', addName);
-
 const spinBtn = document.getElementById('spinBtn');
-spinBtn.addEventListener('click', spinWheel);
-
 const saveWheelBtn = document.getElementById('saveWheelBtn');
-saveWheelBtn.addEventListener('click', saveWheel);
-
 const resetWheelBtn = document.getElementById('resetWheelBtn');
+const nameInput = document.getElementById('nameInput');
+const colorInput = document.getElementById('colorInput');
+const spinSound = document.getElementById('spinSound');
+
+addNameBtn.addEventListener('click', addName);
+addNameBtn.addEventListener('touchstart', addName); // Added touch event
+
+spinBtn.addEventListener('click', spinWheel);
+spinBtn.addEventListener('touchstart', spinWheel); // Added touch event
+
+saveWheelBtn.addEventListener('click', saveWheel);
+saveWheelBtn.addEventListener('touchstart', saveWheel); // Added touch event
+
 resetWheelBtn.addEventListener('click', resetWheel);
+resetWheelBtn.addEventListener('touchstart', resetWheel); // Added touch event
 
-const wheelNameInput = document.getElementById('wheelNameInput');
-
-document.addEventListener('keydown', (event) => {
-    if (popupOpen) {
-        handlePopupKey(event);
-    } else {
-        handleMainKey(event);
-    }
-});
-
-canvas.addEventListener('click', () => {
-    if (!spinning && !popupOpen) {
-        spinWheel();
-    }
-});
-
-function handleMainKey(event) {
-    if ((event.key === 's' || event.key === 'S') && !spinning) {
-        spinWheel();
-    } else if (event.key === '0') {
-        toggleButtons();
-    }
-}
-
-function handlePopupKey(event) {
-    if (event.key === '1') {
-        // Trigger 'Replace' button
-        document.querySelector('.swal2-confirm').click();
-    } else if (event.key === '2') {
-        // Trigger 'Remove' button
-        document.querySelector('.swal2-deny').click();
-    } else if (event.key === 'p' || event.key === 'P') {
-        Swal.close();
-    }
-}
-
-function toggleButtons() {
-    const controlsDiv = document.getElementById('controls');
-    const buttons = controlsDiv.querySelectorAll('button');
-    const nameInput = document.getElementById('nameInput');
-    const colorInput = document.getElementById('colorInput');
-
-    buttons.forEach(button => {
-        button.style.display = button.style.display === 'none' ? 'inline-block' : 'none';
-    });
-
-    nameInput.style.display = nameInput.style.display === 'none' ? 'inline-block' : 'none';
-    colorInput.style.display = colorInput.style.display === 'none' ? 'inline-block' : 'none';
-}
-
-const spinSound = new Audio('spinner-sound-36693.mp3');
+canvas.addEventListener('click', spinWheel);
+canvas.addEventListener('touchstart', spinWheel); // Added touch event
 
 function addName() {
-    const nameInput = document.getElementById('nameInput');
-    const colorInput = document.getElementById('colorInput');
     const name = nameInput.value.trim();
     const color = colorInput.value;
-
     if (name) {
         sections.push({ name, color });
         nameInput.value = '';
@@ -82,15 +38,6 @@ function addName() {
     } else {
         alert('Please enter a name');
     }
-}
-
-function isColorLight(color) {
-    const hex = color.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-    return luminance > 186;
 }
 
 function drawWheel() {
@@ -177,7 +124,7 @@ function spinWheel() {
             const winningIndex = Math.floor(((2 * Math.PI - (totalAngle % (2 * Math.PI))) / (2 * Math.PI)) * sections.length);
             const winner = sections[winningIndex].name;
 
-            popupOpen = true; // Set flag to indicate popup is open
+            popupOpen = true;
 
             Swal.fire({
                 title: winner === "Spin Again" ? "Spin Again!" : `Congratulations, ${winner}!`,
@@ -211,7 +158,7 @@ function spinWheel() {
                     }, 250);
                 },
                 willClose: () => {
-                    popupOpen = false; // Reset flag when popup closes
+                    popupOpen = false;
                     clearInterval(confettiInterval);
                     const confettiCanvas = document.querySelector('canvas.confetti-canvas');
                     if (confettiCanvas) {
@@ -258,5 +205,14 @@ function loadSavedWheel() {
     }
 }
 
-loadSavedWheel(); // Load the saved wheel if available
+function isColorLight(color) {
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return luminance > 127.5;
+}
+
+loadSavedWheel();
 drawWheel();
