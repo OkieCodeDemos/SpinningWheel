@@ -22,9 +22,9 @@
         }
         #pointer {
             position: absolute;
-            top: 50%;
-            left: 100%;
-            transform: translate(-50%, -50%) rotate(270deg);
+            top: 50%; /* Positioned at the vertical center */
+            left: 100%; /* Positioned at the right edge */
+            transform: translate(-50%, -50%) rotate(270deg); /* Center vertically and rotate */
             width: 0;
             height: 0;
             border-left: 20px solid transparent;
@@ -38,6 +38,9 @@
         }
         #colorInput {
             margin-left: 10px;
+        }
+        button {
+            margin: 5px;
         }
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
