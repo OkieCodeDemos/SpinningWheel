@@ -28,12 +28,25 @@ canvas.addEventListener('click', spinWheel);
 canvas.addEventListener('touchstart', spinWheel); // Added touch event
 
 function resizeCanvas() {
-    // Set canvas width and height based on the wheel container's size
-    const containerWidth = document.getElementById('wheelContainer').offsetWidth;
-    canvas.width = containerWidth;
-    canvas.height = containerWidth; // Keep canvas square
-    drawWheel(); // Redraw the wheel whenever the size changes
+    // Get the smaller dimension of the viewport
+    const size = Math.min(window.innerWidth, window.innerHeight) * 0.9; // 90% of the smaller dimension
+
+    // Set the canvas width and height to be equal, ensuring a square
+    canvas.width = size;
+    canvas.height = size;
+
+    // Ensure the wheel is redrawn with the new dimensions
+    drawWheel();
 }
+
+// Attach event listeners for resizing and orientation changes
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', resizeCanvas);
+
+// Initial resize to set up the canvas correctly
+resizeCanvas();
+
+
 
 function addName() {
     const name = nameInput.value.trim();
