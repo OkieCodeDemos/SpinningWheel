@@ -27,6 +27,14 @@ resetWheelBtn.addEventListener('touchstart', resetWheel); // Added touch event
 canvas.addEventListener('click', spinWheel);
 canvas.addEventListener('touchstart', spinWheel); // Added touch event
 
+function resizeCanvas() {
+    // Set canvas width and height based on the wheel container's size
+    const containerWidth = document.getElementById('wheelContainer').offsetWidth;
+    canvas.width = containerWidth;
+    canvas.height = containerWidth; // Keep canvas square
+    drawWheel(); // Redraw the wheel whenever the size changes
+}
+
 function addName() {
     const name = nameInput.value.trim();
     const color = colorInput.value;
@@ -66,18 +74,18 @@ function drawWheel() {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = isColorLight(section.color) ? '#000' : '#FFF';
-        ctx.font = 'bold 40px Arial';
+        ctx.font = 'bold ' + Math.max(20, radius / 10) + 'px Arial';
 
         const maxTextWidth = radius - 20;
         const text = section.name;
         let textWidth = ctx.measureText(text).width;
 
         if (textWidth > maxTextWidth) {
-            ctx.font = 'bold 18px Arial';
+            ctx.font = 'bold ' + Math.max(18, radius / 12) + 'px Arial';
             textWidth = ctx.measureText(text).width;
 
             if (textWidth > maxTextWidth) {
-                ctx.font = 'bold 16px Arial';
+                ctx.font = 'bold ' + Math.max(16, radius / 14) + 'px Arial';
             }
         }
 
@@ -88,6 +96,8 @@ function drawWheel() {
 
 function spinWheel() {
     if (spinning || sections.length === 0 || popupOpen) return;
+
+    resizeCanvas(); // Adjust the canvas size before spinning
 
     spinning = true;
     spinSound.currentTime = 0;
@@ -214,5 +224,9 @@ function isColorLight(color) {
     return luminance > 127.5;
 }
 
+window.addEventListener('resize', resizeCanvas); // Adjust canvas size on window resize
+window.addEventListener('orientationchange', resizeCanvas); // Adjust canvas size on orientation change
+
 loadSavedWheel();
+resizeCanvas(); // Initial canvas size adjustment
 drawWheel();
