@@ -1,56 +1,158 @@
 const canvas = document.getElementById('wheelCanvas');
 const ctx = canvas.getContext('2d');
+const logoInput = document.getElementById('logoInput');
+const uploadLogoBtn = document.getElementById('uploadLogoBtn');
 let sections = [];
 let spinning = false;
-let popupOpen = false;
+let popupOpen = false; // Flag to track if SweetAlert2 popup is open
+let confettiInterval;
+let logoImage = new Image(); // Image object to hold the uploaded logo
+
+
+// Event listener for the logo upload button
+uploadLogoBtn.addEventListener('click', () => {
+    logoInput.click(); // Trigger the file input click
+});
+
+// Event listener for the file input change
+logoInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            logoImage.src = e.target.result;
+            logoImage.onload = drawWheel; // Redraw the wheel after the image loads
+        }
+        reader.readAsDataURL(file); // Convert the image to a base64 URL
+    }
+});
+
 
 const addNameBtn = document.getElementById('addNameBtn');
-const spinBtn = document.getElementById('spinBtn');
-const saveWheelBtn = document.getElementById('saveWheelBtn');
-const resetWheelBtn = document.getElementById('resetWheelBtn');
-const nameInput = document.getElementById('nameInput');
-const colorInput = document.getElementById('colorInput');
-const spinSound = document.getElementById('spinSound');
-
 addNameBtn.addEventListener('click', addName);
-addNameBtn.addEventListener('touchstart', addName); // Added touch event
 
-spinBtn.addEventListener('click', spinWheel);
-spinBtn.addEventListener('touchstart', spinWheel); // Added touch event
+// Get the fullscreen button
+const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-saveWheelBtn.addEventListener('click', saveWheel);
-saveWheelBtn.addEventListener('touchstart', saveWheel); // Added touch event
+// Add event listener for fullscreen button click
+fullscreenBtn.addEventListener('click', toggleFullScreen);
 
-resetWheelBtn.addEventListener('click', resetWheel);
-resetWheelBtn.addEventListener('touchstart', resetWheel); // Added touch event
-
-canvas.addEventListener('click', spinWheel);
-canvas.addEventListener('touchstart', spinWheel); // Added touch event
-
-function resizeCanvas() {
-    // Get the smaller dimension of the viewport
-    const size = Math.min(window.innerWidth, window.innerHeight) * 0.9; // 90% of the smaller dimension
-
-    // Set the canvas width and height to be equal, ensuring a square
-    canvas.width = size;
-    canvas.height = size;
-
-    // Ensure the wheel is redrawn with the new dimensions
-    drawWheel();
+// Function to toggle fullscreen mode
+function toggleFullScreen() {
+    const controlsDiv = document.getElementById('controls');
+    if (!document.fullscreenElement) {
+        // If not in fullscreen, request fullscreen for the entire document
+        document.documentElement.requestFullscreen().then(() => {
+            controlsDiv.style.display = 'none'; // Hide buttons
+        }).catch((err) => {
+            alert(`Error attempting to enable full-screen mode: ${err.message}`);
+        });
+    } else {
+        // If already in fullscreen, exit fullscreen mode
+        document.exitFullscreen();
+        controlsDiv.style.display = 'flex'; // Show buttons again
+    }
 }
 
-// Attach event listeners for resizing and orientation changes
+
+/// Detect fullscreen change and update the button text and visibility accordingly
+document.addEventListener('fullscreenchange', () => {
+    const controlsDiv = document.getElementById('controls');
+    if (document.fullscreenElement) {
+        fullscreenBtn.textContent = 'Exit Fullscreen';
+        controlsDiv.style.display = 'none'; // Hide buttons in fullscreen
+    } else {
+        fullscreenBtn.textContent = 'Fullscreen';
+        controlsDiv.style.display = 'flex'; // Show buttons again
+    }
+});
+
+
+
+const spinBtn = document.getElementById('spinBtn');
+spinBtn.addEventListener('click', spinWheel);
+
+const saveWheelBtn = document.getElementById('saveWheelBtn');
+saveWheelBtn.addEventListener('click', saveWheel);
+
+const resetWheelBtn = document.getElementById('resetWheelBtn');
+resetWheelBtn.addEventListener('click', resetWheel);
+
+const dingSound = new Audio('ding.mp3'); // Replace with your actual ding sound file
+
+// Ensure the canvas is responsive
+function resizeCanvas() {
+    const minDimension = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8); // 80% of the smaller dimension
+    canvas.width = minDimension;
+    canvas.height = minDimension;
+    drawWheel();  // Redraw the wheel after resizing
+}
+
+// Call this function on window resize
 window.addEventListener('resize', resizeCanvas);
-window.addEventListener('orientationchange', resizeCanvas);
 
-// Initial resize to set up the canvas correctly
-resizeCanvas();
+// Make sure canvas resizes correctly when the page loads
+document.addEventListener('DOMContentLoaded', resizeCanvas);
+
+document.addEventListener('keydown', (event) => {
+    if (popupOpen) {
+        handlePopupKey(event);
+    } else {
+        handleMainKey(event);
+    }
+});
+
+canvas.addEventListener('click', () => {
+    if (!spinning && !popupOpen) {
+        spinWheel();
+    }
+});
 
 
+
+function handleMainKey(event) {
+    if ((event.key === 's' || event.key === 'S') && !spinning) {
+        spinWheel();
+    } else if (event.key === '0') {
+        toggleButtons();
+    }
+}
+
+function handlePopupKey(event) {
+    if (event.key === '1') {
+        document.querySelector('.swal2-confirm').click();
+    } else if (event.key === '2') {
+        document.querySelector('.swal2-deny').click();
+    } else if (event.key === 'p' || event.key === 'P') {
+        Swal.close();
+        stopConfetti(); // Stop confetti when popup is closed
+        popupOpen = false; // Set the flag to false when the popup is closed
+    }
+}
+
+function toggleButtons() {
+    const controlsDiv = document.getElementById('controls');
+    const buttons = controlsDiv.querySelectorAll('button');
+    const nameInput = document.getElementById('nameInput');
+    const colorInput = document.getElementById('colorInput');
+
+    buttons.forEach(button => {
+        button.style.display = button.style.display === 'none' ? 'inline-block' : 'none';
+    });
+
+    nameInput.style.display = nameInput.style.display === 'none' ? 'inline-block' : 'none';
+    colorInput.style.display = colorInput.style.display === 'none' ? 'inline-block' : 'none';
+}
+
+const spinSound = new Audio('spinner-sound-36693.mp3');
+const applauseSound = new Audio('applause.mp3'); // Add applause sound
 
 function addName() {
+    const nameInput = document.getElementById('nameInput');
+    const colorInput = document.getElementById('colorInput');
     const name = nameInput.value.trim();
     const color = colorInput.value;
+
     if (name) {
         sections.push({ name, color });
         nameInput.value = '';
@@ -61,14 +163,25 @@ function addName() {
     }
 }
 
+function isColorLight(color) {
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+    return luminance > 186;
+}
+
 function drawWheel() {
     const radius = canvas.width / 2;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const anglePerSlice = 2 * Math.PI / sections.length;
+    const innerCircleRadius = radius * 0.25; // Adjust the size of the white circle (25% of the wheel radius)
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Draw each section of the wheel
     sections.forEach((section, index) => {
         const angle = index * anglePerSlice;
 
@@ -87,40 +200,61 @@ function drawWheel() {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = isColorLight(section.color) ? '#000' : '#FFF';
-        ctx.font = 'bold ' + Math.max(20, radius / 10) + 'px Arial';
+        ctx.font = 'bold 40px Arial';
 
-        const maxTextWidth = radius - 20;
+        const maxTextWidth = radius - innerCircleRadius - 20; // Ensure text does not go under the circle
         const text = section.name;
         let textWidth = ctx.measureText(text).width;
 
+
+        // Special font size for "Spin Again"
+        if (text === 'Spin Again') {
+            ctx.font = 'bold 30px Arial'; // Force this font size for "Spin Again"
+        } else {
+            const maxTextWidth = radius - innerCircleRadius - 20; // Ensure text does not go under the circle
+            let textWidth = ctx.measureText(text).width;
+
+
         if (textWidth > maxTextWidth) {
-            ctx.font = 'bold ' + Math.max(18, radius / 12) + 'px Arial';
+            ctx.font = 'bold 18px Arial';
             textWidth = ctx.measureText(text).width;
 
             if (textWidth > maxTextWidth) {
-                ctx.font = 'bold ' + Math.max(16, radius / 14) + 'px Arial';
+                ctx.font = 'bold 16px Arial';
+                }
             }
         }
 
-        ctx.fillText(text, radius / 2, 0);
+        // Position the text halfway between the inner circle and the edge
+        ctx.fillText(text, (radius + innerCircleRadius) / 2, 0);
         ctx.restore();
     });
-}
+
+    // Draw the white static circle in the center
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerCircleRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = '#FFFFFF'; // White color for the inner circle
+    ctx.fill();
+    ctx.stroke(); // Optional: Add an outline to the white circle
+
+    // Draw the logo in the inner circle if it has been uploaded
+    if (logoImage.src) {
+        const logoSize = innerCircleRadius * 2; // Adjust logo size to fit within the inner circle
+        ctx.drawImage(logoImage, centerX - logoSize / 2, centerY - logoSize / 2, logoSize, logoSize);
+        }
+    }
 
 function spinWheel() {
     if (spinning || sections.length === 0 || popupOpen) return;
 
-    resizeCanvas(); // Adjust the canvas size before spinning
-
     spinning = true;
-    spinSound.currentTime = 0;
-    spinSound.play();
-
-    const duration = 6000;
-    const spins = 20;
+    applauseSound.pause(); // Stop applause sound if it's playing
+    const duration = 7000;
+    const spins = 15;
     const endAngle = Math.random() * 2 * Math.PI;
 
     let start;
+    let lastIndex = -1; // Track the last slice index
 
     function animate(timestamp) {
         if (!start) start = timestamp;
@@ -128,9 +262,13 @@ function spinWheel() {
 
         if (elapsed < duration) {
             const progress = elapsed / duration;
-            const easeOutProgress = 1 - Math.pow(1 - progress, 3);
+            // Modify the easing for smoother acceleration
+            const easeInOutProgress = progress < 0.5 
+                ? 3 * Math.pow(progress, 2)  // Accelerate
+                : -1 + (4 - 2 * progress) * progress; // Decelerate
 
-            const currentAngle = (spins * 2 * Math.PI * easeOutProgress) + endAngle;
+            const currentAngle = (spins * 2 * Math.PI * easeInOutProgress) + endAngle;
+
             ctx.save();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.translate(canvas.width / 2, canvas.height / 2);
@@ -138,108 +276,125 @@ function spinWheel() {
             ctx.translate(-canvas.width / 2, -canvas.height / 2);
             drawWheel();
             ctx.restore();
+
+            // Determine the current winning index
+            const winningIndex = Math.floor(((2 * Math.PI - (currentAngle % (2 * Math.PI))) / (2 * Math.PI)) * sections.length);
+
+            // Play ding sound if the index has changed
+            if (winningIndex !== lastIndex) {
+                dingSound.currentTime = 0; // Reset sound to start
+                dingSound.play();
+                lastIndex = winningIndex; // Update the last index
+            }
+
             requestAnimationFrame(animate);
         } else {
             spinning = false;
-            spinSound.pause();
+            applauseSound.play(); // Play applause sound at the end
 
             const totalAngle = spins * 2 * Math.PI + endAngle;
-            const winningIndex = Math.floor(((2 * Math.PI - (totalAngle % (2 * Math.PI))) / (2 * Math.PI)) * sections.length);
-            const winner = sections[winningIndex].name;
+            const winnerIndex = Math.floor(((2 * Math.PI - (totalAngle % (2 * Math.PI))) / (2 * Math.PI)) * sections.length);
+            const winner = sections[winnerIndex];
 
-            popupOpen = true;
-
-            Swal.fire({
-                title: winner === "Spin Again" ? "Spin Again!" : `Congratulations, ${winner}!`,
-                width: 600,
-                padding: "3em",
-                color: "#000",
-                background: "#fff",
-                customClass: {
-                    popup: 'animated bounceInDown'
-                },
-                stopKeydownPropagation: false,
-                didOpen: () => {
-                    const confettiDuration = 15 * 1000;
-                    const confettiAnimationEnd = Date.now() + confettiDuration;
-                    const confettiDefaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-                    function randomInRange(min, max) {
-                        return Math.random() * (max - min) + min;
+            if (winner.name === 'Spin Again') {
+                Swal.fire({
+                    title: 'You Get To Spin Again!',
+                    confirmButtonText: 'Spin Again',
+                    confirmButtonColor: '#3085d6',
+                    showCancelButton: true,
+                    denyButtonText: 'Remove',
+                    showDenyButton: true,
+                    cancelButtonText: 'Close',
+                    willClose: () => {
+                        stopConfetti();
                     }
-
-                    confettiInterval = setInterval(function() {
-                        const timeLeft = confettiAnimationEnd - Date.now();
-
-                        if (timeLeft <= 0) {
-                            clearInterval(confettiInterval);
-                        }
-
-                        const particleCount = 50 * (timeLeft / confettiDuration);
-                        confetti({ ...confettiDefaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
-                        confetti({ ...confettiDefaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
-                    }, 250);
-                },
-                willClose: () => {
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        stopConfetti();
+                        spinWheel();
+                    } else if (result.isDenied) {
+                        sections.splice(winnerIndex, 1); // Remove "Spin Again" slice
+                        drawWheel(); // Redraw the wheel
+                    }
+                });
+                startConfetti();
+            } else {
+                Swal.fire({
+                    title: 'Winner!',
+                    text: `${winner.name} has won!`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Replace',
+                    denyButtonText: 'Remove',
+                    cancelButtonText: 'Close',
+                    showDenyButton: true,
+                    willClose: () => {
+                        stopConfetti();
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        sections[winnerIndex].name = 'Spin Again';
+                        drawWheel();
+                    } else if (result.isDenied) {
+                        sections.splice(winnerIndex, 1);
+                        drawWheel();
+                    }
+                    stopConfetti();
                     popupOpen = false;
-                    clearInterval(confettiInterval);
-                    const confettiCanvas = document.querySelector('canvas.confetti-canvas');
-                    if (confettiCanvas) {
-                        confettiCanvas.remove();
-                    }
-                },
-                showCancelButton: true,
-                showDenyButton: true,
-                confirmButtonText: 'Replace',
-                confirmButtonColor: '#FF0000',
-                cancelButtonText: 'Close',
-                denyButtonText: 'Remove',
-                denyButtonColor: '#FF0000'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    sections[winningIndex].name = 'Spin Again';
-                    drawWheel();
-                } else if (result.isDenied) {
-                    sections.splice(winningIndex, 1);
-                    drawWheel();
-                }
-            });
+                });
+                startConfetti();
+            }
         }
     }
 
     requestAnimationFrame(animate);
 }
 
-function saveWheel() {
-    localStorage.setItem('wheelSections', JSON.stringify(sections));
-    alert('Wheel saved successfully!');
+
+
+function startConfetti() {
+    confettiInterval = setInterval(() => {
+        confetti({
+            particleCount: 120,
+            spread: 360,
+            angle: 90,
+            origin: {
+                x: Math.random(),
+                y: Math.random()
+            },
+            gravity: 0.8
+        });
+    }, 350);
 }
 
+function stopConfetti() {
+    clearInterval(confettiInterval);
+    confetti({
+        particleCount: 0 // This ensures no particles remain
+    });
+}
+
+// Save wheel configuration to local storage
+function saveWheel() {
+    const data = JSON.stringify(sections);
+    localStorage.setItem('savedWheel', data);
+    alert('Wheel saved successfully!'); // Optional: Notify the user
+}
+
+// Reset wheel and clear saved data
 function resetWheel() {
     sections = [];
-    drawWheel();
+    localStorage.removeItem('savedWheel'); // Clear saved wheel from local storage
+    drawWheel(); // Redraw the wheel after reset
 }
 
-function loadSavedWheel() {
-    const savedSections = localStorage.getItem('wheelSections');
-    if (savedSections) {
-        sections = JSON.parse(savedSections);
+// Load wheel from local storage (if needed on page load)
+function loadWheel() {
+    const savedWheel = localStorage.getItem('savedWheel');
+    if (savedWheel) {
+        sections = JSON.parse(savedWheel);
         drawWheel();
     }
 }
 
-function isColorLight(color) {
-    const hex = color.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    return luminance > 127.5;
-}
-
-window.addEventListener('resize', resizeCanvas); // Adjust canvas size on window resize
-window.addEventListener('orientationchange', resizeCanvas); // Adjust canvas size on orientation change
-
-loadSavedWheel();
-resizeCanvas(); // Initial canvas size adjustment
-drawWheel();
+// Call loadWheel on page load if you want to load it when the page first opens
+document.addEventListener('DOMContentLoaded', loadWheel);
