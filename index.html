@@ -13,55 +13,76 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
-            overflow: hidden; /* Prevent scrollbars on smaller devices */
-        }
-
-        #wheelContainer {
             position: relative;
-            width: 90vmin; /* 90% of the smaller viewport dimension */
-            height: 90vmin; /* Ensure the container is square */
-            max-width: 90vw; /* Ensure the container does not exceed 90% of viewport width */
-            max-height: 90vh; /* Ensure the container does not exceed 90% of viewport height */
         }
 
         #wheelCanvas {
-            width: 100%;
-            height: 100%;
             border: 2px solid #000;
             border-radius: 50%;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
+        #pointer {
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            transform: translate(-50%, -50%) rotate(270deg);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 40px solid grey;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+        }
+
         #controls {
             margin-top: 20px;
             text-align: center;
+            display: flex;
+            flex-wrap: wrap; /* Ensure buttons wrap if needed */
+            justify-content: center;
+            gap: 10px; /* Adds spacing between buttons */
+        }
+
+        #controls button {
+            margin: 0; /* Reset any default margins */
         }
 
         #colorInput {
             margin-left: 10px;
         }
 
-        button {
-            margin: 5px;
-            padding: 10px 15px;
-            font-size: 16px;
+        /* Media query to adjust layout for smaller screens */
+        @media (max-width: 600px) {
+            #controls {
+                flex-direction: column; /* Stack buttons vertically on small screens */
+            }
+
+            #controls button {
+                width: 100%; /* Make buttons take full width on mobile */
+            }
         }
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 </head>
 <body>
-    <div id="wheelContainer">
-        <canvas id="wheelCanvas"></canvas>
+    <div id="wheelContainer" style="position: relative;">
+        <canvas id="wheelCanvas" width="500" height="500"></canvas>
+        <div id="pointer"></div>
     </div>
     <div id="controls">
         <input type="text" id="nameInput" placeholder="Enter name" />
         <input type="color" id="colorInput" />
+        <input type="file" id="logoInput" accept="image/*" style="display: none;" />
         <button id="addNameBtn">Add Name</button>
         <button id="spinBtn">Spin Wheel</button>
         <button id="saveWheelBtn">Save Wheel</button>
         <button id="resetWheelBtn">Reset Wheel</button>
+        <button id="fullscreenBtn">Fullscreen</button>
+        <button id="uploadLogoBtn">Upload Logo</button>
     </div>
     <audio id="spinSound" src="spinner-sound-36693.mp3"></audio>
+    <audio id="applauseSound" src="applause.mp3"></audio> <!-- Added applause sound -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
     <script src="wheel.js"></script>
