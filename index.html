@@ -22,6 +22,19 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
+
+        .logo-overlay {
+            position: absolute;
+            top: 49.8%;
+            left: 50%;
+            transform: translate(-50%, -50%);  /* Center the logo inside the wheel */
+            width: 50%;  /* Scale the logo to fit within the inner circle */
+            height: 55%;  /* Maintain aspect ratio */
+            display: none;  /* Hidden by default */
+            pointer-events: none;  /* Ensure the logo doesn't interfere with wheel interactions */
+        }
+
+
         #pointer {
             position: absolute;
             top: 50%;
@@ -68,18 +81,19 @@
 <body>
     <div id="wheelContainer" style="position: relative;">
         <canvas id="wheelCanvas" width="500" height="500"></canvas>
+        <img id="logoOverlay" class="logo-overlay" style="display: none;" />
         <div id="pointer"></div>
     </div>
     <div id="controls">
         <input type="text" id="nameInput" placeholder="Enter name" />
         <input type="color" id="colorInput" />
-        <input type="file" id="logoInput" accept="image/*" style="display: none;" />
         <button id="addNameBtn">Add Name</button>
         <button id="spinBtn">Spin Wheel</button>
         <button id="saveWheelBtn">Save Wheel</button>
         <button id="resetWheelBtn">Reset Wheel</button>
         <button id="fullscreenBtn">Fullscreen</button>
-        <button id="uploadLogoBtn">Upload Logo</button>
+        <button id="uploadLogoButton">Upload Logo</button>
+        <input type="file" id="logoFileInput" style="display: none;" accept="image/*">
     </div>
     <audio id="spinSound" src="spinner-sound-36693.mp3"></audio>
     <audio id="applauseSound" src="applause.mp3"></audio> <!-- Added applause sound -->
