@@ -1,31 +1,47 @@
 const canvas = document.getElementById('wheelCanvas');
 const ctx = canvas.getContext('2d');
-const logoInput = document.getElementById('logoInput');
-const uploadLogoBtn = document.getElementById('uploadLogoBtn');
 let sections = [];
 let spinning = false;
 let popupOpen = false; // Flag to track if SweetAlert2 popup is open
 let confettiInterval;
-let logoImage = new Image(); // Image object to hold the uploaded logo
 
-
-// Event listener for the logo upload button
-uploadLogoBtn.addEventListener('click', () => {
-    logoInput.click(); // Trigger the file input click
+document.getElementById('uploadLogoButton').addEventListener('click', function() {
+    document.getElementById('logoFileInput').click();  // Trigger the file input
 });
 
-// Event listener for the file input change
-logoInput.addEventListener('change', (event) => {
+document.getElementById('logoFileInput').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
+            const logoImage = new Image();
+            logoImage.onload = function() {
+                setLogoImage(logoImage);  // Call function to display the logo
+            };
             logoImage.src = e.target.result;
-            logoImage.onload = drawWheel; // Redraw the wheel after the image loads
-        }
-        reader.readAsDataURL(file); // Convert the image to a base64 URL
+        };
+        reader.readAsDataURL(file);  // Read the image as a data URL
     }
 });
+
+function setLogoImage(logoImage) {
+    const logoOverlay = document.getElementById('logoOverlay');
+    
+    // Set the logo image source
+    logoOverlay.src = logoImage.src;
+    
+    // Make the logo visible and set its size
+    logoOverlay.style.display = 'block';
+    
+    // Optionally, adjust the size of the logo
+    const wheelRadius = document.getElementById('wheelCanvas').offsetWidth / 2;
+    const innerCircleRadius = wheelRadius * 0.25;  // 25% of the wheel radius
+    const logoSize = innerCircleRadius * 2;  // Logo size should match the inner circle's diameter
+    
+    logoOverlay.style.width = `${logoSize}px`;
+    logoOverlay.style.height = `${logoSize}px`;
+}
+
 
 
 const addNameBtn = document.getElementById('addNameBtn');
@@ -179,6 +195,10 @@ function drawWheel() {
     const anglePerSlice = 2 * Math.PI / sections.length;
     const innerCircleRadius = radius * 0.25; // Adjust the size of the white circle (25% of the wheel radius)
 
+    // Calculate font size based on canvas size (5% of the smaller dimension of canvas)
+    const fontSize = Math.min(canvas.width, canvas.height) * 0.05;
+    ctx.font = `bold ${fontSize}px Arial`;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw each section of the wheel
@@ -200,33 +220,23 @@ function drawWheel() {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = isColorLight(section.color) ? '#000' : '#FFF';
-        ctx.font = 'bold 40px Arial';
 
-        const maxTextWidth = radius - innerCircleRadius - 20; // Ensure text does not go under the circle
-        const text = section.name;
-        let textWidth = ctx.measureText(text).width;
-
-
-        // Special font size for "Spin Again"
-        if (text === 'Spin Again') {
-            ctx.font = 'bold 30px Arial'; // Force this font size for "Spin Again"
-        } else {
-            const maxTextWidth = radius - innerCircleRadius - 20; // Ensure text does not go under the circle
-            let textWidth = ctx.measureText(text).width;
-
+        // Ensure text does not go under the inner circle
+        const maxTextWidth = radius - innerCircleRadius - 20;
+        let textWidth = ctx.measureText(section.name).width;
 
         if (textWidth > maxTextWidth) {
-            ctx.font = 'bold 18px Arial';
-            textWidth = ctx.measureText(text).width;
+            // Scale down font if text is too wide
+            ctx.font = `bold ${fontSize * 0.8}px Arial`;
+            textWidth = ctx.measureText(section.name).width;
 
             if (textWidth > maxTextWidth) {
-                ctx.font = 'bold 16px Arial';
-                }
+                ctx.font = `bold ${fontSize * 0.6}px Arial`;
             }
         }
 
         // Position the text halfway between the inner circle and the edge
-        ctx.fillText(text, (radius + innerCircleRadius) / 2, 0);
+        ctx.fillText(section.name, (radius + innerCircleRadius) / 2, 0);
         ctx.restore();
     });
 
@@ -236,13 +246,7 @@ function drawWheel() {
     ctx.fillStyle = '#FFFFFF'; // White color for the inner circle
     ctx.fill();
     ctx.stroke(); // Optional: Add an outline to the white circle
-
-    // Draw the logo in the inner circle if it has been uploaded
-    if (logoImage.src) {
-        const logoSize = innerCircleRadius * 2; // Adjust logo size to fit within the inner circle
-        ctx.drawImage(logoImage, centerX - logoSize / 2, centerY - logoSize / 2, logoSize, logoSize);
-        }
-    }
+}
 
 function spinWheel() {
     if (spinning || sections.length === 0 || popupOpen) return;
@@ -291,7 +295,7 @@ function spinWheel() {
         } else {
             spinning = false;
             applauseSound.play(); // Play applause sound at the end
-
+            applauseSound.currentTime = 0; // Reset to start of the sound
             const totalAngle = spins * 2 * Math.PI + endAngle;
             const winnerIndex = Math.floor(((2 * Math.PI - (totalAngle % (2 * Math.PI))) / (2 * Math.PI)) * sections.length);
             const winner = sections[winnerIndex];
@@ -328,6 +332,8 @@ function spinWheel() {
                     cancelButtonText: 'Close',
                     showDenyButton: true,
                     willClose: () => {
+                        applauseSound.pause(); // Stop applause sound when the popup closes
+                        applauseSound.currentTime = 0; // Reset to start of applause sound
                         stopConfetti();
                     }
                 }).then((result) => {
