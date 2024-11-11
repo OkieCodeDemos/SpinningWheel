@@ -43,7 +43,6 @@ function setLogoImage(logoImage) {
 }
 
 
-
 const addNameBtn = document.getElementById('addNameBtn');
 addNameBtn.addEventListener('click', addName);
 
@@ -390,6 +389,15 @@ function saveWheel() {
 function resetWheel() {
     sections = [];
     localStorage.removeItem('savedWheel'); // Clear saved wheel from local storage
+    // Reset the logo (hide and clear the logo image)
+    const logoOverlay = document.getElementById('logoOverlay');
+    if (logoOverlay) {
+        logoOverlay.style.display = 'none'; // Hide the logo
+        logoOverlay.src = '';  // Clear the logo source
+    }
+
+    // Optionally, reset any other relevant settings (e.g., wheel rotation state, etc.)
+    wheelRotation = 0;
     drawWheel(); // Redraw the wheel after reset
 }
 
@@ -404,3 +412,67 @@ function loadWheel() {
 
 // Call loadWheel on page load if you want to load it when the page first opens
 document.addEventListener('DOMContentLoaded', loadWheel);
+
+
+// Export wheel configuration to a JSON file
+function exportWheelConfig() {
+    const config = {
+        sections: sections,  // Wheel sections
+        logo: document.getElementById('logoOverlay').src,  // The logo image (base64 or URL)
+    };
+    const configBlob = new Blob([JSON.stringify(config)], { type: 'application/json' });
+    const url = URL.createObjectURL(configBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'wheelConfig.json';  // Name of the exported file
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+// Add event listener for exporting configuration
+document.getElementById('exportWheelBtn').addEventListener('click', exportWheelConfig);
+
+
+// Handle the "Import JSON" button click
+document.getElementById('importJsonBtn').addEventListener('click', function() {
+    document.getElementById('jsonFileInput').click();  // Trigger the file input
+});
+
+// Listen for file input changes to load JSON
+document.getElementById('jsonFileInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file && file.type === 'application/json') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);  // Parse the JSON content
+
+                // Check for valid "sections" array in the data
+                if (data.sections && Array.isArray(data.sections)) {
+                    sections = data.sections;  // Update the sections array with imported data
+                    drawWheel();  // Redraw the wheel with the imported sections
+                } else {
+                    alert('Invalid JSON structure. Ensure the file contains a "sections" array.');
+                }
+
+                // If logo data exists, load the logo
+                if (data.logo) {
+                    const logoImage = new Image();
+                    logoImage.onload = function() {
+                        setLogoImage(logoImage);  // Use your existing function to display the logo
+                    };
+                    logoImage.src = data.logo;  // Set the image source (this could be a base64 string or URL)
+                }
+
+            } catch (error) {
+                alert('Error reading JSON file: ' + error.message);
+            }
+        };
+        reader.readAsText(file);  // Read the file as text
+    } else {
+        alert('Please upload a valid JSON file.');
+    }
+});
+
+// Add event listener for exporting configuration
+document.getElementById('exportWheelBtn').addEventListener('click', exportWheelConfig);
