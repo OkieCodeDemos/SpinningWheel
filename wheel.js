@@ -4,6 +4,8 @@ let sections = [];
 let spinning = false;
 let popupOpen = false; // Flag to track if SweetAlert2 popup is open
 let confettiInterval;
+let logoImage = null;  // Store the logo image globally
+
 
 document.getElementById('uploadLogoButton').addEventListener('click', function() {
     document.getElementById('logoFileInput').click();  // Trigger the file input
@@ -14,33 +16,37 @@ document.getElementById('logoFileInput').addEventListener('change', function(eve
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            const logoImage = new Image();
+            logoImage = new Image();
             logoImage.onload = function() {
-                setLogoImage(logoImage);  // Call function to display the logo
+                setLogoImage();  // Call function to display the logo
+                drawWheel();  // Redraw the wheel to ensure logo displays correctly
             };
             logoImage.src = e.target.result;
         };
-        reader.readAsDataURL(file);  // Read the image as a data URL
+        reader.readAsDataURL(file);
     }
 });
 
-function setLogoImage(logoImage) {
+function setLogoImage() {
     const logoOverlay = document.getElementById('logoOverlay');
     
-    // Set the logo image source
-    logoOverlay.src = logoImage.src;
-    
-    // Make the logo visible and set its size
-    logoOverlay.style.display = 'block';
-    
-    // Optionally, adjust the size of the logo
-    const wheelRadius = document.getElementById('wheelCanvas').offsetWidth / 2;
-    const innerCircleRadius = wheelRadius * 0.25;  // 25% of the wheel radius
-    const logoSize = innerCircleRadius * 2;  // Logo size should match the inner circle's diameter
-    
-    logoOverlay.style.width = `${logoSize}px`;
-    logoOverlay.style.height = `${logoSize}px`;
+    if (logoImage) {
+        // Set the logo image source
+        logoOverlay.src = logoImage.src;
+        
+        // Make the logo visible
+        logoOverlay.style.display = 'block';
+        
+        // Calculate the inner circle's diameter based on the canvas width
+        const innerCircleDiameter = canvas.width * 0.24; // Adjust size as needed
+
+        // Set logo size to fit within the inner circle
+        logoOverlay.style.width = `${innerCircleDiameter}px`;
+        logoOverlay.style.height = `${innerCircleDiameter}px`;
+    }
 }
+
+
 
 
 const addNameBtn = document.getElementById('addNameBtn');
@@ -101,6 +107,9 @@ function resizeCanvas() {
     canvas.width = minDimension;
     canvas.height = minDimension;
     drawWheel();  // Redraw the wheel after resizing
+
+     // Resize and reposition the logo if it exists
+     setLogoImage();
 }
 
 // Call this function on window resize
