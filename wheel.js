@@ -4,7 +4,6 @@ let sections = [];
 let spinning = false;
 let popupOpen = false; // Flag to track if SweetAlert2 popup is open
 let confettiInterval;
-let logoImage = null;  // Store the logo image globally
 
 
 document.getElementById('uploadLogoButton').addEventListener('click', function() {
@@ -27,16 +26,20 @@ document.getElementById('logoFileInput').addEventListener('change', function(eve
     }
 });
 
-function setLogoImage() {
+function setLogoImage(logoSrc = null) {
     const logoOverlay = document.getElementById('logoOverlay');
-    
-    if (logoImage) {
-        // Set the logo image source
-        logoOverlay.src = logoImage.src;
-        
-        // Make the logo visible
-        logoOverlay.style.display = 'block';
-        
+    if (logoOverlay) {
+        // Determine the source of the logo: either from the passed logoSrc or from the global logoImage variable
+        const logoToUse = logoSrc || (typeof logoImage !== 'undefined' ? logoImage.src : '');
+
+        // If there's a valid logo source, set it and display the logo; otherwise, hide it
+        if (logoToUse) {
+            logoOverlay.src = logoToUse;
+            logoOverlay.style.display = 'block'; // Show the logo
+        } else {
+            logoOverlay.style.display = 'none'; // Hide the logo if no source
+        }
+
         // Calculate the inner circle's diameter based on the canvas width
         const innerCircleDiameter = canvas.width * 0.24; // Adjust size as needed
 
@@ -44,7 +47,11 @@ function setLogoImage() {
         logoOverlay.style.width = `${innerCircleDiameter}px`;
         logoOverlay.style.height = `${innerCircleDiameter}px`;
     }
+
+    drawWheel();  // Ensure the wheel is redrawn after updating the logo
 }
+
+
 
 
 
@@ -427,7 +434,7 @@ document.addEventListener('DOMContentLoaded', loadWheel);
 function exportWheelConfig() {
     const config = {
         sections: sections,  // Wheel sections
-        logo: document.getElementById('logoOverlay').src,  // The logo image (base64 or URL)
+        logo: document.getElementById('logoOverlay').src || "",  // The logo image (base64 or URL)
     };
     const configBlob = new Blob([JSON.stringify(config)], { type: 'application/json' });
     const url = URL.createObjectURL(configBlob);
@@ -447,41 +454,38 @@ document.getElementById('importJsonBtn').addEventListener('click', function() {
     document.getElementById('jsonFileInput').click();  // Trigger the file input
 });
 
-// Listen for file input changes to load JSON
+// Load JSON file
 document.getElementById('jsonFileInput').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file && file.type === 'application/json') {
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                const data = JSON.parse(e.target.result);  // Parse the JSON content
+                const data = JSON.parse(e.target.result);
 
-                // Check for valid "sections" array in the data
+                // Validate and apply sections
                 if (data.sections && Array.isArray(data.sections)) {
-                    sections = data.sections;  // Update the sections array with imported data
-                    drawWheel();  // Redraw the wheel with the imported sections
+                    sections = data.sections;
+                    drawWheel();
                 } else {
                     alert('Invalid JSON structure. Ensure the file contains a "sections" array.');
                 }
 
-                // If logo data exists, load the logo
+                // Load logo if available
                 if (data.logo) {
-                    const logoImage = new Image();
-                    logoImage.onload = function() {
-                        setLogoImage(logoImage);  // Use your existing function to display the logo
-                    };
-                    logoImage.src = data.logo;  // Set the image source (this could be a base64 string or URL)
+                    setLogoImage(data.logo);  // Pass logo source to setLogoImage
                 }
 
             } catch (error) {
                 alert('Error reading JSON file: ' + error.message);
             }
         };
-        reader.readAsText(file);  // Read the file as text
+        reader.readAsText(file);
     } else {
         alert('Please upload a valid JSON file.');
     }
 });
+
 
 // Add event listener for exporting configuration
 document.getElementById('exportWheelBtn').addEventListener('click', exportWheelConfig);
